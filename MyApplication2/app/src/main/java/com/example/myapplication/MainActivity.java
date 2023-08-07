@@ -8,7 +8,10 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
@@ -36,7 +39,7 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity {
     // Stops scanning after 10 seconds.
     private static final long SCAN_PERIOD = 10000;
-    final String TAG = "ZZN";
+//    final String TAG = "ZZN";
     private final ActivityResultLauncher<String> mactivityresultlauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(),
                     new ActivityResultCallback<Boolean>() {
@@ -66,12 +69,34 @@ public class MainActivity extends AppCompatActivity {
             //Log.e(TAG, "onScanResult: " );
             if (callbackType == ScanSettings.CALLBACK_TYPE_ALL_MATCHES) {
                 mbtdev = result.getDevice();
-                addbtdev(mbtdev);
+                if (addbtdev(mbtdev)) {
+                    mmybtarrayadapter = new mybtArrayAdapter(mct, 0, marraylistbtdev);
+                    mlvbtdev.setAdapter(mmybtarrayadapter);
+                    String strAddr = mbtdev.getAddress();
+                    Toast.makeText(MainActivity.this, "Found device: " + "Addr:" + strAddr, Toast.LENGTH_LONG).show();
+                }
 
-                mmybtarrayadapter = new mybtArrayAdapter(mct, 0, marraylistbtdev);
-                mlvbtdev.setAdapter(mmybtarrayadapter);
-                String strAddr = mbtdev.getAddress();
-                Toast.makeText(MainActivity.this, "Found device: " + "Addr:" + strAddr, Toast.LENGTH_LONG).show();
+            }
+        }
+    };
+
+
+    private final BluetoothGattCallback mybluetoothGattCallback = new BluetoothGattCallback() {
+        @Override
+        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+            if (newState == BluetoothProfile.STATE_CONNECTED) {
+                // successfully connected to the GATT Server
+                //Toast.makeText(mct,"connected", Toast.LENGTH_SHORT).show();
+                MainActivity.this.runOnUiThread( new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this,
+                                "Coonected", Toast.LENGTH_LONG).show();
+                    }
+                }) ;
+
+            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                // disconnected from the GATT Server
             }
         }
     };
@@ -93,7 +118,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
 
-                Toast.makeText(mct, i + ":" + marraylistbtdev.get(i).getAddress(), Toast.LENGTH_SHORT).show();
+                BluetoothDevice the_device =marraylistbtdev.get(i) ;
+                the_device.connectGatt(mct,false,mybluetoothGattCallback) ;
+
+                //Toast.makeText(mct, i + ":" + marraylistbtdev.get(i).getAddress(), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -133,13 +161,7 @@ public class MainActivity extends AppCompatActivity {
             mactivityresultlauncher.launch(Manifest.permission.BLUETOOTH_ADMIN);
         }
 
-//        if (mct.checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN)==PackageManager.PERMISSION_GRANTED) {
-//            Toast.makeText(mct, "BLUETOOTH PERMISSION is GRANTED", Toast.LENGTH_SHORT).show();
-//            Log.e(TAG, "BLUETOOTH :PERMISSION_GRANTED  ");
-//        }
-//        else{
-//            mactivityresultlauncher.launch(Manifest.permission.BLUETOOTH_SCAN);
-//        }
+
     }
 
     @SuppressLint("MissingPermission")
@@ -159,20 +181,29 @@ public class MainActivity extends AppCompatActivity {
             mhandler.postDelayed(() -> {
                 scanning = false;
                 mbluetoothLeScanner.stopScan(leScanCallback);
+                btnScan.setText("开始扫描");
+                Toast.makeText(mct, "SCAN STOPPED", Toast.LENGTH_SHORT).show();
             }, SCAN_PERIOD);
             scanning = true;
             mbluetoothLeScanner.startScan(leScanCallback);
+            btnScan.setText("停止扫描");
         } else {
             scanning = false;
             mbluetoothLeScanner.stopScan(leScanCallback);
-
+            btnScan.setText("开始扫描");
+            Toast.makeText(mct, "SCAN STOPPED", Toast.LENGTH_SHORT).show();
         }
     }
 
-    void addbtdev(BluetoothDevice parambtdev) {
-        if (parambtdev != null)
+    boolean addbtdev(BluetoothDevice parambtdev) {
+
+        boolean retval = false;
+        if (parambtdev != null) {
             if (!marraylistbtdev.contains(parambtdev)) {
                 marraylistbtdev.add(parambtdev);
+                retval = true;
             }
+        }
+        return retval;
     }
 }
