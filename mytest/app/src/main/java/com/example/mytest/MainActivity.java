@@ -5,7 +5,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
@@ -14,14 +13,13 @@ import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
-import android.content.Intent;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 
@@ -38,9 +36,10 @@ public class MainActivity extends AppCompatActivity {
     // Stops scanning after 10 seconds.
     private final long SCAN_PERIOD = 10000;
     private Handler handler = new Handler();
+    private LayoutInflater mInflator;
     final String TAG = "ZZN";
 
-    private LeDeviceListAdapter leDeviceListAdapter = new LeDeviceListAdapter();
+    //private LeDeviceListAdapter leDeviceListAdapter = new LeDeviceListAdapter();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -141,77 +140,18 @@ public class MainActivity extends AppCompatActivity {
                 public void onScanResult(int callbackType, ScanResult result) {
                     super.onScanResult(callbackType, result);
                     Log.d(TAG, "onScanResult: Scan is goning");
-                    leDeviceListAdapter.addDevice(result.getDevice());
-                    leDeviceListAdapter.notifyDataSetChanged();
+                    //leDeviceListAdapter.addDevice(result.getDevice());
+                    //leDeviceListAdapter.notifyDataSetChanged();
                 }
             };
 
 
-    // Adapter for holding devices found through scanning.
-    private class LeDeviceListAdapter extends BaseAdapter {
-        private ArrayList<BluetoothDevice> mLeDevices;
-        private LayoutInflater mInflator;
 
-        public LeDeviceListAdapter() {
-            super();
-            mLeDevices = new ArrayList<BluetoothDevice>();
-            mInflator = MainActivity.this.getLayoutInflater();
-        }
 
-        public void addDevice(BluetoothDevice device) {
-            if(!mLeDevices.contains(device)) {
-                mLeDevices.add(device);
-            }
-        }
 
-        public BluetoothDevice getDevice(int position) {
-            return mLeDevices.get(position);
-        }
 
-        public void clear() {
-            mLeDevices.clear();
-        }
 
-        @Override
-        public int getCount() {
-            return mLeDevices.size();
-        }
-
-        @Override
-        public Object getItem(int i) {
-            return mLeDevices.get(i);
-        }
-
-        @Override
-        public long getItemId(int i) {
-            return i;
-        }
-
-        @Override
-        public View getView(int i, View view, ViewGroup viewGroup) {
-//            RecyclerView.ViewHolder viewHolder;
-//            // General ListView optimization code.
-//            if (view == null) {
-//                view = mInflator.inflate(R.layout.listitem_device, null);
-//                viewHolder = new RecyclerView.ViewHolder();
-//                viewHolder.deviceAddress = (TextView) view.findViewById(R.id.device_address);
-//                viewHolder.deviceName = (TextView) view.findViewById(R.id.device_name);
-//                view.setTag(viewHolder);
-//            } else {
-//                viewHolder = (ViewHolder) view.getTag();
-//            }
-//
-//            BluetoothDevice device = mLeDevices.get(i);
-//            final String deviceName = device.getName();
-//            if (deviceName != null && deviceName.length() > 0)
-//                viewHolder.deviceName.setText(deviceName);
-//            else
-//                viewHolder.deviceName.setText(R.string.unknown_device);
-//            viewHolder.deviceAddress.setText(device.getAddress());
-
-            return view;
-        }
-    }
 }
+
 
 
