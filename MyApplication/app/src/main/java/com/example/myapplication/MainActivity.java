@@ -12,6 +12,8 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.BluetoothLeScanner;
@@ -23,6 +25,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -36,12 +39,14 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 
 public class MainActivity extends AppCompatActivity {
     // Stops scanning after 10 seconds.
     private static final long SCAN_PERIOD = 10000;
-//    final String TAG = "ZZN";
+    final String TAG = "ZZN";
     private final ActivityResultLauncher<String> mactivityresultlauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(),
                     new ActivityResultCallback<Boolean>() {
@@ -53,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
 
                         }
                     });
-    BluetoothManager mbluetoothmanager;
+    private BluetoothManager mbluetoothmanager;
     BluetoothAdapter mbluetoothadapter;
     BluetoothLeScanner mbluetoothLeScanner;
     Handler mhandler;
@@ -61,48 +66,9 @@ public class MainActivity extends AppCompatActivity {
     ListView mlvbtdev;
     mybtArrayAdapter mmybtarrayadapter;
     ArrayList<BluetoothDevice> marraylistbtdev;
+    BluetoothDevice mserverisconnected ;
     private boolean scanning = false;
     private Context mct = MainActivity.this;
-    ScanCallback leScanCallback = new ScanCallback() {
-        @Override
-        public void onScanResult(int callbackType, ScanResult result) {
-            BluetoothDevice mbtdev;
-            super.onScanResult(callbackType, result);
-            //Log.e(TAG, "onScanResult: " );
-            if (callbackType == ScanSettings.CALLBACK_TYPE_ALL_MATCHES) {
-                mbtdev = result.getDevice();
-                if (addbtdev(mbtdev)) {
-                    mmybtarrayadapter = new mybtArrayAdapter(mct, 0, marraylistbtdev);
-                    mlvbtdev.setAdapter(mmybtarrayadapter);
-                    String strAddr = mbtdev.getAddress();
-                    Toast.makeText(MainActivity.this, "Found device: " + "Addr:" + strAddr, Toast.LENGTH_LONG).show();
-                }
-
-            }
-        }
-    };
-
-
-    private final BluetoothGattCallback mybluetoothGattCallback = new BluetoothGattCallback() {
-        @Override
-        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-            if (newState == BluetoothProfile.STATE_CONNECTED) {
-                // successfully connected to the GATT Server
-                //Toast.makeText(mct,"connected", Toast.LENGTH_SHORT).show();
-                MainActivity.this.runOnUiThread( new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(MainActivity.this,
-                                "Coonected", Toast.LENGTH_LONG).show();
-                    }
-                }) ;
-
-            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                // disconnected from the GATT Server
-            }
-        }
-    };
-
 
     @RequiresApi(api = Build.VERSION_CODES.S)
     @Override
@@ -119,9 +85,11 @@ public class MainActivity extends AppCompatActivity {
         mlvbtdev.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                mserverisconnected = marraylistbtdev.get(i)  ;
+                if (connecttoserver(mserverisconnected)) {
 
-                BluetoothDevice the_device =marraylistbtdev.get(i) ;
-                the_device.connectGatt(mct,false,mybluetoothGattCallback) ;
+                }
+
 
                 //Toast.makeText(mct, i + ":" + marraylistbtdev.get(i).getAddress(), Toast.LENGTH_SHORT).show();
             }
@@ -131,13 +99,80 @@ public class MainActivity extends AppCompatActivity {
         marraylistbtdev = new ArrayList<>();
 
         btnScan.setOnClickListener(view -> {
-
             requirepermission();
             scanLeDevice();
             Toast.makeText(MainActivity.this, "开始扫描附近的蓝牙设备", Toast.LENGTH_SHORT).show();
         });
 
     }
+
+    ScanCallback leScanCallback = new ScanCallback() {
+        @Override
+        public void onScanResult(int callbackType, ScanResult result) {
+            BluetoothDevice mbtdev;
+            super.onScanResult(callbackType, result);
+            //Log.e(TAG, "onScanResult: " );
+            if (callbackType == ScanSettings.CALLBACK_TYPE_ALL_MATCHES) {
+                mbtdev = result.getDevice();
+                if (addbtdev(mbtdev)) {
+                    mmybtarrayadapter = new mybtArrayAdapter(mct, 0, marraylistbtdev);
+                    mlvbtdev.setAdapter(mmybtarrayadapter);
+                    String strAddr = mbtdev.getAddress();
+                    //Toast.makeText(MainActivity.this, "Found device: " + "Addr:" + strAddr, Toast.LENGTH_LONG).show();
+                }
+
+            }
+        }
+    };
+
+
+    private final BluetoothGattCallback mybluetoothGattCallback = new BluetoothGattCallback() {
+
+        @Override
+        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+            if (newState == BluetoothProfile.STATE_CONNECTED) {
+                // successfully connected to the GATT Server
+                //Toast.makeText(mct,"connected", Toast.LENGTH_SHORT).show();
+                MainActivity.this.runOnUiThread( new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this,
+                                "Coonected", Toast.LENGTH_LONG).show();
+                    }
+                }) ;
+                BluetoothGatt locgatt =gatt ;
+                locgatt.discoverServices() ;
+
+            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                // disconnected from the GATT Server
+            }
+        }
+
+        @Override
+        public void onServicesDiscovered(BluetoothGatt gatt,int status){
+
+                Log.d(TAG,"onServicesDiscovered") ;
+            List<BluetoothGattService> listservice = gatt.getServices();
+            for ( BluetoothGattService service : listservice) {
+                List<BluetoothGattCharacteristic> listcharacteristic = service.getCharacteristics();
+                for (BluetoothGattCharacteristic characteristic:listcharacteristic){
+                    UUID locuuid = characteristic.getUuid();
+                    Log.d(TAG, locuuid.toString()) ;
+                }
+            }
+        }
+
+    } ;
+
+    private boolean connecttoserver(BluetoothDevice parabledevice ) {
+
+        BluetoothDevice the_device = parabledevice ;
+        the_device.connectGatt(mct,false,mybluetoothGattCallback) ;
+       return true ;
+    }
+
+
+
 
     private void requirepermission() {
 
@@ -183,17 +218,21 @@ public class MainActivity extends AppCompatActivity {
             mhandler.postDelayed(() -> {
                 scanning = false;
                 mbluetoothLeScanner.stopScan(leScanCallback);
-                btnScan.setText("开始扫描");
-                Toast.makeText(mct, "SCAN STOPPED", Toast.LENGTH_SHORT).show();
+                //btnScan.setText("开始扫描");
+                btnScan.setEnabled(true);
+               // Toast.makeText(mct, "SCAN STOPPED", Toast.LENGTH_SHORT).show();
             }, SCAN_PERIOD);
             scanning = true;
             mbluetoothLeScanner.startScan(leScanCallback);
-            btnScan.setText("停止扫描");
+            //btnScan.setText("停止扫描");
+            btnScan.setEnabled(false);
         } else {
             scanning = false;
             mbluetoothLeScanner.stopScan(leScanCallback);
-            btnScan.setText("开始扫描");
-            Toast.makeText(mct, "SCAN STOPPED", Toast.LENGTH_SHORT).show();
+            //btnScan.setText("开始扫描");
+            btnScan.setEnabled(true);
+
+            //Toast.makeText(mct, "SCAN STOPPED", Toast.LENGTH_SHORT).show();
         }
     }
 
