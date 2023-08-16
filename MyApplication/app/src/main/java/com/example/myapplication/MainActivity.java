@@ -158,6 +158,7 @@ public class MainActivity extends AppCompatActivity {
                 for (BluetoothGattCharacteristic characteristic:listcharacteristic){
                     UUID locuuid = characteristic.getUuid();
                     Log.d(TAG, locuuid.toString()) ;
+                    //test
                 }
             }
         }
