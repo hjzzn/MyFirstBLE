@@ -6,6 +6,8 @@ package com.example.myapplication;
 //edit in office
 //edit by github 2023-08-08 8:47
 
+import static android.bluetooth.BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
@@ -38,6 +40,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -158,6 +161,11 @@ public class MainActivity extends AppCompatActivity {
                 for (BluetoothGattCharacteristic characteristic:listcharacteristic){
                     UUID locuuid = characteristic.getUuid();
                     Log.d(TAG, locuuid.toString()) ;
+                    String loc_ssid ="LightSpeed" ;
+                    if (locuuid.toString()=="" ){
+                        byte[] loc_byte_ssid= loc_ssid.getBytes(StandardCharsets.US_ASCII) ;
+                        gatt.writeCharacteristic( characteristic, loc_byte_ssid,BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+                    };
                     //test
                 }
             }
@@ -179,21 +187,21 @@ public class MainActivity extends AppCompatActivity {
 
         mct = this;
         if (mct.checkSelfPermission(Manifest.permission.BLUETOOTH) == PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(mct, "BLUETOOTH PERMISSION is GRANTED", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(mct, "BLUETOOTH PERMISSION is GRANTED", Toast.LENGTH_SHORT).show();
 //             Log.e(TAG, "BLUETOOTH :PERMISSION_GRANTED  ");
         } else {
             mactivityresultlauncher.launch(Manifest.permission.BLUETOOTH);
         }
 
         if (mct.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(mct, "ACCESS_FINE_LOCATION PERMISSION is GRANTED", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(mct, "ACCESS_FINE_LOCATION PERMISSION is GRANTED", Toast.LENGTH_SHORT).show();
             //           Log.e(TAG, "BLUETOOTH :PERMISSION_GRANTED  ");
         } else {
             mactivityresultlauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
         }
 
         if (mct.checkSelfPermission(Manifest.permission.BLUETOOTH_ADMIN) == PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(mct, "BLUETOOTH_ADMIN PERMISSION is GRANTED", Toast.LENGTH_SHORT).show();
+           // Toast.makeText(mct, "BLUETOOTH_ADMIN PERMISSION is GRANTED", Toast.LENGTH_SHORT).show();
             //           Log.e(TAG, "BLUETOOTH :PERMISSION_GRANTED  ");
         } else {
             mactivityresultlauncher.launch(Manifest.permission.BLUETOOTH_ADMIN);
