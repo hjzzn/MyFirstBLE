@@ -161,16 +161,42 @@ public class MainActivity extends AppCompatActivity {
                 for (BluetoothGattCharacteristic characteristic:listcharacteristic){
                     UUID locuuid = characteristic.getUuid();
                     Log.d(TAG, locuuid.toString()) ;
-                    String loc_ssid ="LightSpeed" ;
-                    if (locuuid.toString()=="" ){
-                        byte[] loc_byte_ssid= loc_ssid.getBytes(StandardCharsets.US_ASCII) ;
-                        gatt.writeCharacteristic( characteristic, loc_byte_ssid,BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+//                    String loc_ssid ="LightSpeed" ;
+//                    //写入WIFI SSID
+//                    if (locuuid.toString().equals("0000ff01-0000-1000-8000-00805f9b34fb")){
+//                        byte[] loc_byte_ssid= loc_ssid.getBytes() ;
+//                        characteristic.setValue(loc_byte_ssid) ;
+//                        boolean loc_write_status= gatt.writeCharacteristic(characteristic) ;
+//                       //int loc_write_status =gatt.writeCharacteristic( characteristic, loc_byte_ssid,);
+//                        if (loc_write_status) {
+//                            Log.d(TAG ,"Write WIFI SSID Success!");
+//                        }
+//                    };
+                    //写入WIFI连接密码
+                    String loc_wifi_passwd ="83653316zzn" ;
+                    if (locuuid.toString().equals("0000ff02-0000-1000-8000-00805f9b34fb")){
+                        byte[] loc_byte_wifi_passwd= loc_wifi_passwd.getBytes() ;
+                        characteristic.setValue(loc_byte_wifi_passwd) ;
+                        boolean loc_write_status= gatt.writeCharacteristic(characteristic) ;
+                        //int loc_write_status =gatt.writeCharacteristic( characteristic, loc_byte_ssid,);
+                        if (loc_write_status) {
+                            Log.d(TAG ,"Write Wifi Password Success!");
+                        }
                     };
+
                     //test
                 }
             }
         }
 
+        @Override
+        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            super.onCharacteristicWrite(gatt, characteristic, status);
+            if  (status ==BluetoothGatt.GATT_SUCCESS){
+                Log.d(TAG,"write success!") ;
+            }
+
+        }
     } ;
 
     private boolean connecttoserver(BluetoothDevice parabledevice ) {
